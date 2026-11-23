@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="id" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="google" content="notranslate">
+    <title>CBT Sumatif Akhir Semester - PJOK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            /* Anti-Cheat: Block selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
+        }
+        
+        /* Floating Camera Container */
+        #camera-container {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 100px;
+            height: 130px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 50;
+            cursor: move;
+            border: 2px solid #3b82f6;
+            touch-action: none; /* Prevent scroll while dragging */
+        }
+        
+        @media (min-width: 768px) {
+            #camera-container {
+                width: 140px;
+                height: 180px;
+            }
+        }
+
+        #exam-camera {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect */
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar for content */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+
+        /* Radio Button Styling */
+        .option-label {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-input:checked + .option-box {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+        .option-input:checked + .option-box .radio-circle {
+            border-color: #2563eb;
+            background-color: #2563eb;
+        }
+        .option-input:checked + .option-box .radio-circle::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            display: block;
+        }
+
+        /* Prevent image dragging */
+        img {
+            -webkit-user-drag: none;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen overflow-hidden flex flex-col" oncontextmenu="return false;">
+
+    <!-- 1. LOGIN SECTION -->
+    <div id="login-section" class="flex-1 flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 h-full absolute inset-0 z-40">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    CBT
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Sumatif Akhir Semester</h1>
+                <p class="text-gray-500 font-medium">Mata Pelajaran: PJOK</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" id="input-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masukkan nama lengkap" required autocomplete="off">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                    <select id="input-class" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <option value="" disabled selected>Pilih Kelas</option>
+                        <option value="8 A">8 A</option>
+                        <option value="8 B">8 B</option>
+                        <option value="8 C">8 C</option>
+                        <option value="8 D">8 D</option>
+                        <option value="8 E">8 E</option>
+                        <option value="8 F">8 F</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Token Ujian</label>
+                    <input type="text" id="input-token" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase" placeholder="Masukkan token (PJOK82026)" autocomplete="off">
+                </div>
+                
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg mt-4 transition-colors shadow-md text-lg">
+                    Lanjut ke Persiapan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. DEVICE CHECK SECTION -->
+    <div id="setup-section" class="hidden flex-1 flex items-center justify-center p-4 bg-gray-900 h-full absolute inset-0 z-40">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-lg text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Persiapan Perangkat</h2>
+            <p class="text-gray-600 text-sm mb-6">Ujian ini memerlukan akses Kamera, Mikrofon, dan mode Layar Penuh (Fullscreen) untuk sistem pengawasan.</p>
+            
+            <div class="bg-gray-100 rounded-xl p-2 mb-6 h-64 flex items-center justify-center relative overflow-hidden border-2 border-dashed border-gray-300">
+                <video id="camera-preview" autoplay muted playsinline class="hidden absolute inset-0 w-full h-full object-cover transform -scale-x-100"></video>
+                <div id="preview-placeholder" class="text-gray-400 flex flex-col items-center">
+                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                    <span>Menunggu Izin Kamera...</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col space-y-3">
+                <button id="btn-grant" onclick="requestPermissions()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-lg transition-colors text-lg">
+                    Berikan Izin Akses
+                </button>
+                <button id="btn-start-exam" onclick="startExam()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-lg transition-colors shadow-lg text-lg">
+                    Mulai Ujian Sekarang
+                </button>
+            </div>
+            <p id="setup-error" class="text-red-500 text-sm mt-3 hidden"></p>
+        </div>
+    </div>
+
+    <!-- 3. EXAM SECTION -->
+    <div id="exam-section" class="hidden flex-col h-full absolute inset-0 z-30 bg-gray-50">
+        <!-- Header -->
+        <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-20 shrink-0 border-b border-gray-200">
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-bold font-mono border border-blue-200 text-lg flex items-center shadow-sm">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="timer-display">90:00</span>
+                </div>
+                <div id="warning-badge" class="hidden bg-red-100 text-red-700 px-2 py-1.5 rounded text-xs font-bold border border-red-200 animate-pulse flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span id="warning-text">Peringatan: 0/3</span>
+                </div>
+            </div>
+            
+            <button onclick="document.getElementById('modal-questions').classList.remove('hidden')" class="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                <span class="hidden sm:inline">Daftar Soal</span>
+            </button>
+        </header>
+
+        <!-- Floating Camera -->
+        <div id="camera-container">
+            <video id="exam-camera" autoplay muted playsinline></video>
+            <div class="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none font-semibold">Proctoring Active</div>
+        </div>
+
+        <!-- Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 pb-24 relative" id="exam-content-area">
+            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-8">
+                <div class="flex justify-between items-center mb-5 border-b pb-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">Soal No. <span id="current-question-num">1</span></h2>
+                    <span class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">Pilihan Ganda</span>
+                </div>
+                
+                <div class="text-gray-800 text-base md:text-lg mb-8 leading-relaxed font-medium" id="question-text">
+                    <!-- Question text goes here -->
+                </div>
+
+                <div class="space-y-3" id="options-container">
+                    <!-- Options injected via JS -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Sticky Footer Navigation -->
+        <footer class="bg-white border-t border-gray-200 p-3 md:p-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+            <div class="max-w-4xl mx-auto flex justify-between items-center">
+                <button onclick="prevQuestion()" id="btn-prev" class="px-4 py-2.5 md:px-5 md:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base flex items-center">
+                    &larr; <span class="hidden sm:inline ml-1">Sebelumnya</span>
+                </button>
+                
+                <button onclick="showSubmitModal()" class="px-5 py-2.5 md:px-8 md:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-md text-sm md:text-base">
+                    SELESAI
+                </button>
+                
+                <button onclick="nextQuestion()" id="btn-next" class="px-4 py-2.5 md:px-5 md:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base flex items-center">
+                    <span class="hidden sm:inline mr-1">Selanjutnya</span> &rarr;
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 4. RESULT SECTION -->
+    <div id="result-section" class="hidden flex-1 flex items-center justify-center p-4 bg-gray-100 h-full absolute inset-0 z-50 overflow-y-auto">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center my-auto">
+            <div id="result-icon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4">
+                <!-- Icon injected -->
+            </div>
+            <h2 id="result-title" class="text-3xl font-bold mb-2 text-gray-800">Ujian Selesai</h2>
+            <p id="result-status" class="text-gray-500 font-medium mb-6">Memproses data...</p>
+            
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-6 text-left">
+                <div class="flex justify-between mb-2"><span class="text-gray-600">Nama:</span> <span id="res-name" class="font-bold text-gray-800"></span></div>
+                <div class="flex justify-between mb-2"><span class="text-gray-600">Kelas:</span> <span id="res-class" class="font-bold text-gray-800"></span></div>
+                <div class="flex justify-between mb-2"><span class="text-gray-600">Status:</span> <span id="res-cheat" class="font-bold text-green-600"></span></div>
+                <div class="flex justify-between pt-2 border-t border-gray-200 mt-2">
+                    <span class="text-gray-600 font-bold">Skor Akhir:</span> 
+                    <span id="res-score" class="font-bold text-2xl text-blue-600">0</span>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-400">Silakan tutup tab atau browser Anda.</p>
+        </div>
+    </div>
+
+    <!-- MODAL: QUESTION LIST -->
+    <div id="modal-questions" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:w-auto sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="font-bold text-lg text-gray-800">Daftar Soal</h3>
+                <button onclick="document.getElementById('modal-questions').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-full p-1.5 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-5 sm:grid-cols-10 gap-2" id="grid-questions">
+                    <!-- Grid generated via JS -->
+                </div>
+                
+                <div class="mt-6 flex flex-wrap gap-4 text-xs font-medium text-gray-600 justify-center">
+                    <div class="flex items-center"><div class="w-4 h-4 bg-white border border-gray-300 rounded-sm mr-1.5"></div> Belum Dijawab</div>
+                    <div class="flex items-center"><div class="w-4 h-4 bg-green-500 rounded-sm mr-1.5"></div> Sudah Dijawab</div>
+                    <div class="flex items-center"><div class="w-4 h-4 bg-blue-600 rounded-sm mr-1.5"></div> Sedang Aktif</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CUSTOM ALERT (CHEATING) -->
+    <div id="modal-alert" class="hidden fixed inset-0 z-[70] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl animate-bounce">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-red-600 mb-2">PERINGATAN!</h3>
+            <p id="modal-alert-text" class="text-gray-700 mb-6 font-medium">Anda terdeteksi meninggalkan layar ujian.</p>
+            <button onclick="dismissAlert()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors">
+                Saya Mengerti & Kembali
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIRM SUBMIT -->
+    <div id="modal-submit" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Konfirmasi Selesai Ujian</h3>
+            <p class="text-gray-600 mb-4">Apakah Anda yakin ingin menyelesaikan ujian sekarang? Jawaban tidak dapat diubah setelah diselesaikan.</p>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Terjawab:</span>
+                    <span id="confirm-answered" class="font-bold text-green-600">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Belum Terjawab:</span>
+                    <span id="confirm-unanswered" class="font-bold text-red-600">50</span>
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('modal-submit').classList.add('hidden')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition-colors">
+                    Batal
+                </button>
+                <button onclick="processSubmission(false)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
+                    Ya, Selesai
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==============================================================
+           DATA SOAL & KUNCI JAWABAN (50 SOAL PJOK Kelas 8)
+           A=0, B=1, C=2, D=3
+           ============================================================== */
+        const questionsData = [
+            { q: "Dalam permainan bola basket, seorang pemain melakukan dribble, kemudian menghentikan bola dengan kedua tangan. Setelah itu, pemain tersebut melakukan dribble kembali tanpa memberikan operan. Pelanggaran tersebut disebut ....", opts: ["Traveling", "Double dribble", "Blocking", "Charging"], ans: 1 },
+            { q: "Seorang pemain melakukan fast break, tetapi jalur menuju ring dijaga dua lawan. Keputusan paling tepat adalah ....", opts: ["Memaksakan tembakan jarak jauh", "Menghentikan permainan", "Mengoper kepada teman yang lebih bebas", "Melakukan dribble ke arah dua lawan"], ans: 2 },
+            { q: "Tujuan utama melakukan pivot adalah ....", opts: ["Mempercepat lari", "Melindungi bola dan mencari kesempatan mengoper atau menembak", "Menghentikan waktu", "Menghindari semua penjagaan"], ans: 1 },
+            { q: "Tembakan yang berhasil masuk dari luar garis tiga angka menghasilkan ....", opts: ["1 poin", "2 poin", "3 poin", "4 poin"], ans: 2 },
+            { q: "Pemain bertahan menjaga lawan secara langsung dan dekat. Teknik ini disebut ....", opts: ["Zone defense", "Man to man defense", "Fast break", "Give and go"], ans: 1 },
+            { q: "Chest pass mudah dipotong lawan karena lintasannya mudah dibaca. Perbaikan paling tepat adalah ....", opts: ["Melempar setinggi mungkin", "Mengarahkan operan dengan tepat sambil memperhatikan posisi lawan", "Melempar tanpa melihat sasaran", "Mengurangi tenaga hingga bola berhenti"], ans: 1 },
+            { q: "Pemain bertahan merebut bola setelah tembakan lawan tidak masuk. Tindakan ini disebut ....", opts: ["Rebound", "Shooting", "Dribbling", "Passing"], ans: 0 },
+            { q: "Pemain terlalu lama melakukan dribble sehingga teman sulit memperoleh bola. Kesalahan utamanya adalah ....", opts: ["Kurang memahami kerja sama dan pergerakan tanpa bola", "Terlalu sering rebound", "Terlalu cepat shooting", "Tidak melakukan pivot"], ans: 0 },
+            { q: "Tujuan utama lay-up shoot adalah ....", opts: ["Memasukkan bola dari jarak dekat dengan langkah terkoordinasi", "Mengoper ke pemain belakang", "Menghentikan serangan lawan", "Menguasai bola di tengah"], ans: 0 },
+            { q: "Agar tidak melakukan traveling saat menerima bola sambil bergerak menuju ring, pemain harus ....", opts: ["Melangkah sebanyak mungkin", "Mengatur langkah sesuai aturan permainan", "Berhenti lalu berjalan kembali", "Dribble setelah melompat"], ans: 1 },
+            { q: "Kelebihan utama strategi zone defense adalah ....", opts: ["Setiap pemain mengikuti satu lawan", "Pemain menjaga wilayah tertentu untuk melindungi area pertahanan", "Semua pemain di bawah ring", "Tidak perlu komunikasi"], ans: 1 },
+            { q: "Free throw dilakukan dari ....", opts: ["Garis tengah", "Garis lemparan bebas", "Garis tiga angka", "Sudut lapangan"], ans: 1 },
+            { q: "Bounce pass berguna ketika teman dijaga ketat karena ....", opts: ["Bola memantul melalui lantai sehingga dapat melewati jangkauan lawan", "Bola melambung lebih tinggi", "Operan menjadi lebih lambat", "Bola langsung menuju ring"], ans: 0 },
+            { q: "Tim sering kehilangan bola akibat operan tidak akurat. Latihan paling tepat adalah ....", opts: ["Lari jarak jauh saja", "Variasi passing dengan sasaran dan tekanan lawan", "Melompat tanpa bola", "Shooting tanpa memperhatikan operan"], ans: 1 },
+            { q: "Kombinasi serangan tim yang paling efektif adalah ....", opts: ["Dribble terus-menerus", "Passing, pergerakan tanpa bola, dan shooting pada posisi tepat", "Semua pemain berkumpul di sekitar bola", "Mengandalkan satu penembak"], ans: 1 },
+            { q: "Posisi tubuh yang benar saat meluncur dalam renang gaya bebas adalah ....", opts: ["Tegak lurus", "Horizontal dan sejajar permukaan air", "Kepala selalu diangkat tinggi", "Kaki jauh di bawah permukaan"], ans: 1 },
+            { q: "Kepala terlalu tinggi saat gaya bebas menyebabkan ....", opts: ["Hambatan air meningkat dan pinggul cenderung turun", "Kecepatan selalu meningkat", "Kaki lebih ringan", "Tubuh lebih mudah mengapung"], ans: 0 },
+            { q: "Gerakan kaki renang gaya dada menyerupai ....", opts: ["Mengayuh sepeda", "Tendangan katak", "Tendangan bebas bergantian", "Kaki lurus ke atas dan bawah"], ans: 1 },
+            { q: "Koordinasi gerakan gaya dada yang tepat adalah ....", opts: ["Tarikan tangan, pengambilan napas, tendangan kaki, lalu meluncur", "Tendangan kaki saja", "Tangan dan kaki acak", "Bernapas tanpa mengikuti gerakan"], ans: 0 },
+            { q: "Pada renang gaya punggung, posisi wajah sebaiknya ....", opts: ["Menghadap ke bawah", "Menghadap ke atas", "Menghadap ke samping sepanjang waktu", "Selalu di dalam air"], ans: 1 },
+            { q: "Kesalahan yang dapat mengganggu ritme renang gaya bebas adalah ....", opts: ["Kaki bergerak bergantian", "Rotasi tubuh wajar", "Menahan napas terlalu lama", "Mengambil napas dengan memutar kepala ke samping"], ans: 2 },
+            { q: "Tujuan gerakan meluncur sebelum berenang adalah ....", opts: ["Mengurangi hambatan air dan memperoleh posisi streamline", "Mempercepat kelelahan", "Mengurangi daya apung", "Membuat tubuh tenggelam"], ans: 0 },
+            { q: "Pengambilan napas yang benar pada gaya bebas dilakukan dengan ....", opts: ["Mengangkat kepala ke depan setinggi mungkin", "Memutar kepala ke samping mengikuti rotasi tubuh", "Menundukkan kepala ke dasar kolam", "Mengangkat seluruh tubuh keluar air"], ans: 1 },
+            { q: "Kesulitan mempertahankan arah saat gaya punggung kemungkinan disebabkan ....", opts: ["Gerakan tangan dan kaki tidak seimbang", "Tubuh terlalu horizontal", "Kepala rileks", "Kaki bergerak bergantian"], ans: 0 },
+            { q: "Gerakan kedua tangan pada gaya dada dilakukan secara ....", opts: ["Bergantian", "Bersamaan dan simetris", "Bergantian seperti gaya punggung", "Tidak beraturan"], ans: 1 },
+            { q: "Manfaat utama latihan pernapasan dalam renang adalah ....", opts: ["Mengurangi kemampuan paru-paru", "Membantu mengatur pengambilan dan pengeluaran napas", "Menghilangkan kebutuhan koordinasi", "Meniadakan pemanasan"], ans: 1 },
+            { q: "Siswa cepat lelah karena mengeluarkan tenaga terlalu besar di awal renang. Solusi terbaik adalah ....", opts: ["Berenang secepat mungkin sejak awal", "Mengatur ritme dan penggunaan tenaga secara efisien", "Menghentikan gerakan tangan", "Menahan napas selama mungkin"], ans: 1 },
+            { q: "Fungsi utama gerakan kaki pada gaya bebas adalah ....", opts: ["Menjaga keseimbangan dan memberikan dorongan", "Menggantikan seluruh gerakan tangan", "Menghentikan laju tubuh", "Membuat kepala selalu di bawah air"], ans: 0 },
+            { q: "Pemanasan sebelum berenang bertujuan untuk ....", opts: ["Mengurangi kesiapan tubuh", "Mempersiapkan otot dan persendian serta mengurangi risiko cedera", "Membuat tubuh cepat lelah", "Mengurangi koordinasi"], ans: 1 },
+            { q: "Jika teman mengalami kesulitan di kolam dan siswa belum terlatih menyelamatkan di air, tindakan paling tepat adalah ....", opts: ["Langsung melompat dan menariknya tanpa bantuan", "Membiarkannya", "Meminta bantuan petugas/orang dewasa dan memberikan alat bantu dari tempat aman jika tersedia", "Berenang menjauh"], ans: 2 },
+            { q: "Teknik start yang digunakan dalam lari jarak pendek adalah ....", opts: ["Start berdiri", "Start jongkok", "Start melayang", "Start berjalan"], ans: 1 },
+            { q: "Tujuan utama start jongkok pada lari jarak pendek adalah ....", opts: ["Mengurangi kecepatan awal", "Memaksimalkan dorongan saat mulai berlari", "Memperlambat kaki", "Mempermudah berhenti"], ans: 1 },
+            { q: "Pada aba-aba “siap” dalam start jongkok, posisi pinggul sebaiknya ....", opts: ["Tetap lebih rendah dari lutut", "Diangkat sehingga tubuh siap melakukan tolakan", "Menyentuh tanah", "Sejajar tumit tanpa perubahan"], ans: 1 },
+            { q: "Pelari kehilangan kecepatan karena tubuh terlalu tegak setelah start. Perbaikan tepat adalah ....", opts: ["Badan sedikit condong ke depan pada fase percepatan awal", "Mengangkat lutut tanpa keseimbangan", "Melihat ke belakang", "Memperlambat ayunan tangan"], ans: 0 },
+            { q: "Ayunan lengan dalam lari jarak pendek berfungsi untuk ....", opts: ["Menghambat kaki", "Menjaga keseimbangan dan koordinasi gerak tubuh", "Mengurangi frekuensi langkah", "Menggantikan otot kaki"], ans: 1 },
+            { q: "Pengaturan tenaga penting dalam lari jarak menengah karena ....", opts: ["Kecepatan perlu diatur agar performa bertahan sampai akhir", "Harus berlari secepat mungkin sejak awal", "Tidak membutuhkan daya tahan", "Hanya mengandalkan tangan"], ans: 0 },
+            { q: "Perbedaan utama lari jarak pendek dan menengah terletak pada ....", opts: ["Warna pakaian", "Kebutuhan pengaturan kecepatan dan daya tahan", "Bentuk lintasan", "Jumlah juri"], ans: 1 },
+            { q: "Keberhasilan pergantian tongkat estafet dipengaruhi oleh ....", opts: ["Kecepatan saja", "Koordinasi, ketepatan waktu, dan komunikasi antarpelari", "Panjang pakaian", "Jumlah penonton"], ans: 1 },
+            { q: "Tongkat estafet terjatuh saat pergantian. Hal ini menunjukkan kurangnya ....", opts: ["Koordinasi dan latihan pergantian tongkat", "Kemampuan melompat", "Kekuatan perut saja", "Kemampuan berenang"], ans: 0 },
+            { q: "Urutan tahapan lompat jauh yang benar adalah ....", opts: ["Tolakan, awalan, melayang, mendarat", "Awalan, tolakan, melayang, mendarat", "Awalan, melayang, mendarat, tolakan", "Mendarat, awalan, tolakan, melayang"], ans: 1 },
+            { q: "Tujuan awalan dalam lompat jauh adalah ....", opts: ["Memperoleh kecepatan horizontal sebelum tolakan", "Mengurangi jarak lompatan", "Memperlambat tubuh", "Mengurangi keseimbangan"], ans: 0 },
+            { q: "Saat melakukan tolakan lompat jauh, atlet menggunakan ....", opts: ["Kedua kaki bersamaan", "Satu kaki terkuat pada papan tolakan", "Kedua tangan", "Lutut"], ans: 1 },
+            { q: "Agar pendaratan lompat jauh lebih optimal, atlet sebaiknya ....", opts: ["Menjulurkan kedua kaki ke depan menjelang mendarat", "Mendarat dengan badan tegak kaku", "Melipat kaki ke belakang", "Menjatuhkan badan ke belakang sebelum kaki menyentuh pasir"], ans: 0 },
+            { q: "Lompatan jauh dinyatakan tidak sah apabila ....", opts: ["Awalan berkecepatan tinggi", "Tolakan melewati garis batas papan tolakan", "Mendarat dengan kedua kaki", "Mengayunkan tangan saat melayang"], ans: 1 },
+            { q: "Tujuan nomor lempar dalam atletik adalah ....", opts: ["Mendorong tubuh sejauh mungkin", "Melempar atau menolak alat sejauh mungkin sesuai teknik dan aturan", "Berlari mengelilingi lapangan", "Melompat setinggi mungkin"], ans: 1 },
+            { q: "Teknik yang benar dalam tolak peluru dilakukan dengan cara ....", opts: ["Melempar peluru dari belakang kepala", "Menolak peluru dari dekat bahu menggunakan satu tangan", "Menendang peluru", "Melempar dengan dua tangan dari bawah"], ans: 1 },
+            { q: "Sebelum ditolak, peluru diletakkan pada ....", opts: ["Telapak tangan jauh dari tubuh", "Dekat leher atau bahu", "Belakang kepala", "Ujung jari kaki"], ans: 1 },
+            { q: "Atlet melakukan gerakan seperti melempar bola pada tolak peluru. Kesalahan utamanya adalah ....", opts: ["Tidak menggunakan teknik menolak sesuai ketentuan", "Menggunakan kekuatan lengan", "Mengatur keseimbangan", "Melakukan awalan"], ans: 0 },
+            { q: "Faktor penting keberhasilan lempar lembing adalah ....", opts: ["Kecepatan, kekuatan, koordinasi, dan ketepatan sudut pelepasan", "Tinggi badan saja", "Warna lembing", "Panjang pakaian"], ans: 0 },
+            { q: "Latihan kekuatan, kecepatan, kelentukan, koordinasi, dan daya tahan bertujuan untuk ....", opts: ["Meningkatkan kondisi fisik yang mendukung keterampilan atletik", "Mengurangi kemampuan gerak", "Membuat teknik tidak diperlukan", "Menghilangkan pemanasan"], ans: 0 }
+        ];
+
+        /* ==============================================================
+           GLOBAL VARIABLES
+           ============================================================== */
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2CBQjFtGwO1o-zjnznzzubbtwLiClvCFoLLhzTAOBfjnuHpUux1Oop_VAsCdzs06r/exec";
+        
+        let studentData = { name: "", className: "", token: "" };
+        let answers = new Array(questionsData.length).fill(null);
+        let currentQuestion = 0;
+        
+        // Anti Cheat Variables
+        let isExamActive = false;
+        let warnings = 0;
+        let cheatDebounce = false;
+        let audioCtx, oscillator, gainNode, sirenInterval;
+        
+        // Timer Variables (90 Minutes)
+        let timerSeconds = 90 * 60;
+        let timerInterval;
+
+        /* ==============================================================
+           1. CORE LOGIC (LOGIN & PREP)
+           ============================================================== */
+        function handleLogin() {
+            const name = document.getElementById('input-name').value.trim();
+            const cls = document.getElementById('input-class').value;
+            const token = document.getElementById('input-token').value.trim().toUpperCase();
+
+            if (!name || !cls) {
+                showCustomMessage("Harap isi Nama dan Kelas!");
+                return;
+            }
+            if (token !== "PJOK82026") {
+                showCustomMessage("Token tidak valid!");
+                return;
+            }
+
+            studentData = { name, className: cls, token };
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('setup-section').classList.remove('hidden');
+        }
+
+        async function requestPermissions() {
+            const btnStart = document.getElementById('btn-start-exam');
+            const btnGrant = document.getElementById('btn-grant');
+            const errText = document.getElementById('setup-error');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const videoPrev = document.getElementById('camera-preview');
+                const videoExam = document.getElementById('exam-camera');
+                
+                videoPrev.srcObject = stream;
+                videoExam.srcObject = stream;
+                
+                document.getElementById('preview-placeholder').classList.add('hidden');
+                videoPrev.classList.remove('hidden');
+                
+                btnGrant.classList.add('hidden');
+                btnStart.classList.remove('hidden');
+                errText.classList.add('hidden');
+            } catch (err) {
+                errText.textContent = "Akses Kamera/Mikrofon ditolak! Anda tidak bisa mengikuti ujian.";
+                errText.classList.remove('hidden');
+            }
+        }
+
+        async function startExam() {
+            try {
+                // Request Fullscreen
+                const docElm = document.documentElement;
+                if (docElm.requestFullscreen) {
+                    await docElm.requestFullscreen();
+                } else if (docElm.webkitRequestFullscreen) { /* Safari */
+                    await docElm.webkitRequestFullscreen();
+                } else if (docElm.msRequestFullscreen) { /* IE11 */
+                    await docElm.msRequestFullscreen();
+                }
+            } catch (e) {
+                console.warn("Fullscreen API failed", e);
+            }
+
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('exam-section').classList.remove('hidden');
+            document.getElementById('exam-section').classList.add('flex');
+            
+            isExamActive = true;
+            generateQuestionGrid();
+            renderQuestion();
+            startTimer();
+            setupAntiCheat();
+        }
+
+        /* ==============================================================
+           2. EXAM UI & NAVIGATION
+           ============================================================== */
+        function renderQuestion() {
+            const q = questionsData[currentQuestion];
+            document.getElementById('current-question-num').textContent = currentQuestion + 1;
+            document.getElementById('question-text').textContent = q.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const alphabet = ['A', 'B', 'C', 'D'];
+            
+            q.opts.forEach((optText, index) => {
+                const isChecked = answers[currentQuestion] === index;
+                const optHtml = `
+                    <label class="option-label block relative">
+                        <input type="radio" name="q_opt" class="option-input peer sr-only" value="${index}" ${isChecked ? 'checked' : ''} onchange="selectAnswer(${index})">
+                        <div class="option-box flex items-center p-3 md:p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                            <div class="radio-circle w-5 h-5 rounded-full border-2 border-gray-300 mr-4 flex items-center justify-center shrink-0"></div>
+                            <div class="flex-1">
+                                <span class="font-bold mr-2 text-gray-700">${alphabet[index]}.</span>
+                                <span class="text-gray-700">${optText}</span>
+                            </div>
+                        </div>
+                    </label>
+                `;
+                optionsContainer.insertAdjacentHTML('beforeend', optHtml);
+            });
+
+            // Update Buttons
+            document.getElementById('btn-prev').disabled = currentQuestion === 0;
+            document.getElementById('btn-next').disabled = currentQuestion === questionsData.length - 1;
+            
+            updateGridUI();
+            
+            // Reset scroll to top
+            document.getElementById('exam-content-area').scrollTop = 0;
+        }
+
+        function selectAnswer(index) {
+            answers[currentQuestion] = index;
+            updateGridUI();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questionsData.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function jumpToQuestion(idx) {
+            currentQuestion = idx;
+            renderQuestion();
+            document.getElementById('modal-questions').classList.add('hidden');
+        }
+
+        function generateQuestionGrid() {
+            const grid = document.getElementById('grid-questions');
+            grid.innerHTML = '';
+            for (let i = 0; i < questionsData.length; i++) {
+                const btn = document.createElement('button');
+                btn.id = `grid-btn-${i}`;
+                btn.textContent = i + 1;
+                btn.className = `w-full aspect-square rounded-lg font-bold text-sm flex items-center justify-center transition-all border`;
+                btn.onclick = () => jumpToQuestion(i);
+                grid.appendChild(btn);
+            }
+            updateGridUI();
+        }
+
+        function updateGridUI() {
+            for (let i = 0; i < questionsData.length; i++) {
+                const btn = document.getElementById(`grid-btn-${i}`);
+                if (!btn) continue;
+                
+                // Reset classes
+                btn.className = `w-full aspect-square rounded-lg font-bold text-sm md:text-base flex items-center justify-center transition-all border-2`;
+                
+                if (i === currentQuestion) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-blue-700', 'ring-2', 'ring-blue-300');
+                } else if (answers[i] !== null) {
+                    btn.classList.add('bg-green-500', 'text-white', 'border-green-600');
+                } else {
+                    btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100');
+                }
+            }
+        }
+
+        /* ==============================================================
+           3. TIMER LOGIC
+           ============================================================== */
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                updateTimerDisplay();
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    processSubmission(true, "Waktu Habis");
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timerSeconds / 60);
+            const s = timerSeconds % 60;
+            const display = document.getElementById('timer-display');
+            display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            
+            if (timerSeconds <= 300) { // last 5 minutes
+                display.parentElement.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                display.parentElement.classList.add('bg-red-100', 'text-red-700', 'border-red-300', 'animate-pulse');
+            }
+        }
+
+        /* ==============================================================
+           4. ANTI-CHEAT (AUDIO SIREN & EVENT LISTENERS)
+           ============================================================== */
+        function playSiren() {
+            if (audioCtx) return; 
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator = audioCtx.createOscillator();
+                gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sawtooth';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                oscillator.start();
+                
+                let high = true;
+                sirenInterval = setInterval(() => {
+                    if(!audioCtx) return;
+                    oscillator.frequency.setValueAtTime(high ? 800 : 400, audioCtx.currentTime);
+                    high = !high;
+                }, 300);
+            } catch(e) { console.warn("AudioContext failed", e); }
+        }
+
+        function stopSiren() {
+            if (oscillator) {
+                try { oscillator.stop(); oscillator.disconnect(); } catch(e){}
+            }
+            if (sirenInterval) clearInterval(sirenInterval);
+            if (audioCtx) {
+                try { audioCtx.close(); } catch(e){}
+            }
+            audioCtx = null; oscillator = null;
+        }
+
+        function triggerCheatWarning() {
+            if (!isExamActive || cheatDebounce) return;
+            cheatDebounce = true;
+            warnings++;
+            
+            playSiren();
+            
+            const warningBadge = document.getElementById('warning-badge');
+            warningBadge.classList.remove('hidden');
+            document.getElementById('warning-text').textContent = `Peringatan: ${warnings}/3`;
+            
+            document.getElementById('modal-alert-text').textContent = `Anda terdeteksi keluar dari layar ujian. (Peringatan ${warnings} dari 3)`;
+            document.getElementById('modal-alert').classList.remove('hidden');
+        }
+
+        function dismissAlert() {
+            stopSiren();
+            document.getElementById('modal-alert').classList.add('hidden');
+            
+            if (warnings >= 3) {
+                processSubmission(true, "Diskualifikasi (Curang)");
+            }
+            
+            // Debounce to prevent double trigger
+            setTimeout(() => { cheatDebounce = false; }, 2000);
+        }
+
+        function setupAntiCheat() {
+            // Block Shortcuts
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'F12' || (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u' || e.key === 's'))) {
+                    e.preventDefault();
+                }
+            });
+            // Detect Tab Switch/Minimize
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') triggerCheatWarning();
+            });
+            window.addEventListener('blur', function() {
+                triggerCheatWarning();
+            });
+        }
+
+        // Custom Message Box (Replaces Alert)
+        function showCustomMessage(msg) {
+            // Reusing alert modal for general messages to avoid creating too many DOM elements
+            const modal = document.getElementById('modal-alert');
+            const title = modal.querySelector('h3');
+            const text = document.getElementById('modal-alert-text');
+            const btn = modal.querySelector('button');
+            
+            title.textContent = "INFORMASI";
+            title.className = "text-xl font-bold text-blue-600 mb-2";
+            modal.querySelector('svg').parentElement.className = "w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4";
+            modal.querySelector('svg').className = "w-8 h-8 text-blue-600";
+            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors";
+            
+            text.textContent = msg;
+            modal.classList.remove('hidden');
+            
+            // Override onclick temporarily
+            const oldOnclick = btn.onclick;
+            btn.onclick = () => {
+                modal.classList.add('hidden');
+                // restore original
+                setTimeout(() => {
+                    title.textContent = "PERINGATAN!";
+                    title.className = "text-xl font-bold text-red-600 mb-2";
+                    modal.querySelector('svg').parentElement.className = "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
+                    modal.querySelector('svg').className = "w-8 h-8 text-red-600";
+                    btn.className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors";
+                    btn.onclick = dismissAlert;
+                }, 300);
+            };
+        }
+
+        /* ==============================================================
+           5. DRAGGABLE CAMERA (TOUCH & MOUSE)
+           ============================================================== */
+        const cam = document.getElementById('camera-container');
+        let isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+        function dragStart(e) {
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            if (e.target === cam || cam.contains(e.target)) isDragging = true;
+        }
+
+        function dragEnd() {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            // Boundaries
+            const rect = cam.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width;
+            const maxY = window.innerHeight - rect.height;
+            
+            // Calculate absolute position based on default top:70, right:20 
+            // xOffset moves left (negative right), yOffset moves down
+            let newRight = 20 - xOffset;
+            let newTop = 70 + yOffset;
+
+            // Constrain
+            if(newRight < 0) newRight = 0;
+            if(newRight > maxX) newRight = maxX;
+            if(newTop < 0) newTop = 0;
+            if(newTop > maxY) newTop = maxY;
+
+            cam.style.right = newRight + 'px';
+            cam.style.top = newTop + 'px';
+            cam.style.transform = `none`; 
+            
+            // reset offsets so it doesn't jump on next grab
+            xOffset = 20 - newRight;
+            yOffset = newTop - 70;
+        }
+
+        cam.addEventListener("touchstart", dragStart, {passive: false});
+        cam.addEventListener("touchend", dragEnd);
+        cam.addEventListener("touchmove", drag, {passive: false});
+        cam.addEventListener("mousedown", dragStart);
+        window.addEventListener("mouseup", dragEnd);
+        window.addEventListener("mousemove", drag);
+
+        /* ==============================================================
+           6. SUBMISSION & GOOGLE SHEETS INTEGRATION
+           ============================================================== */
+        function showSubmitModal() {
+            const answeredCount = answers.filter(a => a !== null).length;
+            document.getElementById('confirm-answered').textContent = answeredCount;
+            document.getElementById('confirm-unanswered').textContent = questionsData.length - answeredCount;
+            document.getElementById('modal-submit').classList.remove('hidden');
+        }
+
+        function processSubmission(isForced = false, statusStr = "Selesai Normal") {
+            isExamActive = false;
+            clearInterval(timerInterval);
+            document.getElementById('modal-submit').classList.add('hidden');
+            document.getElementById('exam-section').classList.add('hidden');
+            document.getElementById('exam-section').classList.remove('flex');
+            
+            // Stop Camera
+            try {
+                const stream = document.getElementById('exam-camera').srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            } catch(e){}
+
+            // Exit fullscreen safely
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(e => console.warn(e));
+            }
+
+            const resultSection = document.getElementById('result-section');
+            resultSection.classList.remove('hidden');
+            resultSection.classList.add('flex');
+
+            // Calculate Score
+            let correct = 0;
+            let detailArr = [];
+            for (let i = 0; i < questionsData.length; i++) {
+                const isCorrect = answers[i] === questionsData[i].ans;
+                if (isCorrect) correct++;
+                detailArr.push(answers[i] !== null ? String.fromCharCode(65 + answers[i]) : "-");
+            }
+            const score = Math.round((correct / questionsData.length) * 100);
+
+            // Prepare Payload for Google Sheets
+            const payload = {
+                waktu: new Date().toLocaleString("id-ID"),
+                nama: studentData.name,
+                kelas: studentData.className,
+                skor: score,
+                status: statusStr,
+                terjawab: answers.filter(a => a !== null).length,
+                detail: detailArr.join(",")
+            };
+
+            // Display Processing UI
+            document.getElementById('result-status').textContent = "Mengirim data ke server...";
+            document.getElementById('result-icon').innerHTML = `<svg class="animate-spin w-10 h-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            // Send to Apps Script Webhook
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Because Google Apps Script standard exec endpoint requires no-cors from frontend if not configured correctly for preflight
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                showFinalResult(payload, true);
+            }).catch((err) => {
+                console.error(err);
+                showFinalResult(payload, false);
+            });
+        }
+
+        function showFinalResult(data, isSuccess) {
+            document.getElementById('result-status').textContent = isSuccess ? "Data berhasil terkirim" : "Gagal mengirim data. Skor tersimpan lokal.";
+            document.getElementById('result-status').className = isSuccess ? "text-green-600 font-medium mb-6" : "text-red-600 font-medium mb-6";
+            
+            if (data.status.includes("Curang")) {
+                document.getElementById('result-title').textContent = "Diskualifikasi";
+                document.getElementById('result-title').className = "text-3xl font-bold mb-2 text-red-600";
+                document.getElementById('result-icon').innerHTML = `<svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else {
+                document.getElementById('result-icon').innerHTML = `<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            }
+
+            document.getElementById('res-name').textContent = data.nama;
+            document.getElementById('res-class').textContent = data.kelas;
+            document.getElementById('res-cheat').textContent = data.status;
+            if (data.status.includes("Curang")) document.getElementById('res-cheat').className = "font-bold text-red-600";
+            document.getElementById('res-score').textContent = data.skor;
+        }
+    </script>
+</body>
+</html>
